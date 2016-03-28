@@ -1,31 +1,19 @@
 package com.miga.gifview;
 
 import org.appcelerator.kroll.common.Log;
-import org.appcelerator.kroll.KrollModule;
 import org.appcelerator.kroll.annotations.Kroll;
 import org.appcelerator.kroll.KrollDict;
-import java.util.HashMap;
 import org.appcelerator.titanium.view.TiUIView;
-import org.appcelerator.titanium.util.TiUIHelper;
 import org.appcelerator.titanium.io.TiBaseFile;
 import org.appcelerator.titanium.io.TiFileFactory;
-
+import org.appcelerator.titanium.TiApplication;
 import org.appcelerator.titanium.proxy.TiViewProxy;
 import org.appcelerator.kroll.KrollProxy;
 import android.app.Activity;
-import java.io.ByteArrayOutputStream;
-import org.appcelerator.titanium.TiApplication;
-
 import android.content.res.Resources;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.content.res.Configuration;
-import android.os.Handler;
-import android.graphics.Bitmap;
-
-import android.widget.ImageView;
-import java.io.FileDescriptor;
-import java.io.RandomAccessFile;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import com.felipecsl.gifimageview.library.GifImageView;
@@ -50,16 +38,42 @@ public class GifViewProxy extends TiViewProxy {
 
 	@Kroll.method
     public void stop() {
-        if (gifView != null)
+        if (gifView != null) {
             gifView.stopAnimation();
         }
+    }
 
     @Kroll.method
     public void start() {
-        if (gifView != null)
+        if (gifView != null) {
             gifView.startAnimation();
         }
+    }
 
+    @Kroll.getProperty @Kroll.method
+    public String getImage() {
+        return imageSrc;      
+    }
+
+    @Kroll.setProperty @Kroll.method
+    public void setImage(String url) {
+        if (gifView != null) {
+            gifView.stopAnimation();
+        }
+        imageSrc = url;
+        openImage();          
+    }
+
+    @Kroll.setProperty @Kroll.method
+    public void setAutoStart(boolean val) {
+        autoStart = val;       
+    }
+    
+    @Kroll.getProperty @Kroll.method
+    public boolean getAutoStart() {
+        return autoStart;       
+    }
+    
     @Override
     public TiUIView createView(Activity activity) {
         TiUIView view = new GifView(this);
@@ -93,7 +107,6 @@ public class GifViewProxy extends TiViewProxy {
 
     public byte[] readBytes(InputStream inputStream) throws IOException {
         // http://stackoverflow.com/a/2436413/5193915
-        // this dynamically extends to take the bytes you read
         ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();
 
         // this is storage overwritten on each iteration with bytes
@@ -108,6 +121,29 @@ public class GifViewProxy extends TiViewProxy {
         
         // and then we can return your byte array.
         return byteBuffer.toByteArray();
+    }
+    
+    private void openImage(){
+        String url = getPathToApplicationAsset(imageSrc);
+        TiBaseFile file = TiFileFactory.createTitaniumFile(new String[] { url }, false);            
+         
+        try {
+            if (file!=null) {
+                InputStream is = file.getInputStream();
+                if (gifView != null) {
+                    gifView.setBytes(readBytes(is));
+                    if (autoStart){
+                        gifView.startAnimation();
+                    }
+                } else {
+                    Log.e("GIF","View not found");    
+                }
+            } else {
+                Log.e("GIF","File is null");
+            }
+        } catch (IOException e){
+            
+        }
     }
     
     private class GifView extends TiUIView {
@@ -126,32 +162,8 @@ public class GifViewProxy extends TiViewProxy {
             LayoutInflater inflater     = LayoutInflater.from(getActivity());
             videoWrapper = inflater.inflate(resId_videoHolder, null);
             gifView   = (GifImageView)videoWrapper.findViewById(resId_video);
-            // appContext
             
-            String url = getPathToApplicationAsset(imageSrc);
-			TiBaseFile file = TiFileFactory.createTitaniumFile(new String[] { url }, false);            
-            Log.i("GIF","Load: " + url);
-            Log.i("GIF","is file: " + file.isFile());            
-            Log.i("GIF","file: " + file);  
-            
-            try {
-                if (file!=null) {
-                    InputStream is = file.getInputStream();
-                    if (gifView != null) {
-                        Log.i("GIF","set bytes");
-                        gifView.setBytes(readBytes(is));
-                        if (autoStart){
-                            gifView.startAnimation();
-                        }
-                    }
-                } else {
-                    Log.i("GIF","File is null");
-                }
-            } catch (IOException e){
-                
-            }
-            
-            
+            openImage();
             setNativeView(videoWrapper);
         }
 
