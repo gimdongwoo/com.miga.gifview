@@ -14,7 +14,7 @@ Alloy xml
 <GifView id="view_gif" module="com.miga.gifview" autoStart="true" image="/images/test.gif"/>
 ~~~
 
-methods:
+javascript methods:
 
 ~~~javascript
 $.gif_view.image = "/images/test.gif";
@@ -23,7 +23,7 @@ $.gif_view.start();
 $.gif_view.stop();
 ~~~
 
-properties:
+tss properties:
 
 ~~~css
 image: "/images/test.gif",
