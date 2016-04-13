@@ -16,7 +16,16 @@ import android.view.View;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
+import org.appcelerator.titanium.TiBlob;
 import com.felipecsl.gifimageview.library.GifImageView;
+import org.appcelerator.titanium.view.TiDrawableReference;
+import android.graphics.BitmapFactory;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+import java.io.BufferedInputStream;
+import java.net.URLConnection;
+import android.graphics.Bitmap;
 
 @Kroll.proxy(creatableInModule = TigifviewModule.class)
 public class GifViewProxy extends TiViewProxy {
@@ -27,6 +36,8 @@ public class GifViewProxy extends TiViewProxy {
     String imageSrc;
     private static TiBaseFile file;
     private boolean autoStart = false;
+    public static final String URL_REGEX = "^((https?|ftp)://|(www|ftp)\\.)?[a-z0-9-]+(\\.[a-z0-9-]+)+([/?].*)?$";
+    private static TiBlob imgObj = null;
 
 	public GifViewProxy() {
 		super();
@@ -123,26 +134,74 @@ public class GifViewProxy extends TiViewProxy {
         return byteBuffer.toByteArray();
     }
     
-    private void openImage(){
-        String url = getPathToApplicationAsset(imageSrc);
-        TiBaseFile file = TiFileFactory.createTitaniumFile(new String[] { url }, false);            
-         
+    public byte[] getRemoteImage(final URL aURL) {
         try {
-            if (file!=null) {
-                InputStream is = file.getInputStream();
-                if (gifView != null) {
-                    gifView.setBytes(readBytes(is));
-                    if (autoStart){
-                        gifView.startAnimation();
+            final URLConnection conn = aURL.openConnection();
+            conn.connect();
+            final BufferedInputStream bis = new BufferedInputStream(conn.getInputStream());
+            ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();
+            
+            int bufferSize = 1024;
+            byte[] buffer = new byte[bufferSize];
+            int len = 0;
+            while ((len = bis.read(buffer)) != -1) {
+                byteBuffer.write(buffer, 0, len);
+            }
+            bis.close();
+
+            return byteBuffer.toByteArray();            
+        } catch (IOException e) {
+            Log.e("round","Error fetching url");
+        }
+        return null;
+    }
+    
+    private void openImage(){
+        
+        Pattern p = Pattern.compile(URL_REGEX);
+        Matcher m = p.matcher(imageSrc);//replace with string to compare
+
+        if(m.find()) {                
+            Thread thread = new Thread(new Runnable(){
+                @Override
+                public void run() {
+                    try {
+                        if (gifView != null) {
+                            Log.i("V",getRemoteImage(new URL(imageSrc))  + "" );
+                            gifView.setBytes( getRemoteImage(new URL(imageSrc)) );
+                            
+                            if (autoStart){
+                                gifView.startAnimation();
+                            }
+                        }
+                    } catch (Exception e) {
+                        Log.e("round","REMOTE error" + e);
+                        e.printStackTrace();
+                    }
+                }
+            });
+            thread.start();        
+        } else {
+            String url = getPathToApplicationAsset(imageSrc);
+            TiBaseFile file = TiFileFactory.createTitaniumFile(new String[] { url }, false);            
+             
+            try {
+                if (file!=null) {
+                    InputStream is = file.getInputStream();
+                    if (gifView != null) {
+                        gifView.setBytes(readBytes(is));
+                        if (autoStart){
+                            gifView.startAnimation();
+                        }
+                    } else {
+                        Log.e("GIF","View not found");    
                     }
                 } else {
-                    Log.e("GIF","View not found");    
+                    Log.e("GIF","File is null");
                 }
-            } else {
-                Log.e("GIF","File is null");
+            } catch (IOException e){
+                
             }
-        } catch (IOException e){
-            
         }
     }
     

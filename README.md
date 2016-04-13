@@ -21,6 +21,21 @@ $.gif_view.image = "/images/test.gif";
 $.gif_view.autoStart = true;
 $.gif_view.start();
 $.gif_view.stop();
+
+// or create it in js
+
+var g = require('com.miga.gifview').createGifView({
+    width: Ti.UI.FILL,
+    height: 40,
+    bubbleParent: false,
+    touchEnabled: false,
+    image: "/images/test.gif",
+    bottom: 30,
+    left: 0,
+    right: 0,
+    autoStart: true
+});
+
 ~~~
 
 tss properties:
