@@ -167,7 +167,6 @@ public class GifViewProxy extends TiViewProxy {
                 public void run() {
                     try {
                         if (gifView != null) {
-                            Log.i("V",getRemoteImage(new URL(imageSrc))  + "" );
                             gifView.setBytes( getRemoteImage(new URL(imageSrc)) );
                             
                             if (autoStart){
@@ -229,6 +228,14 @@ public class GifViewProxy extends TiViewProxy {
         @Override
         public void processProperties(KrollDict d) {
             super.processProperties(d);
+            
+            if (d.containsKey("image")) {
+    			imageSrc = d.getString("image");          
+    		}
+    		if (d.containsKey("autoStart")) {
+    			autoStart = d.getBoolean("autoStart");          
+    		}
+            openImage();
         }
 
     }

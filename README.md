@@ -44,3 +44,61 @@ tss properties:
 image: "/images/test.gif",
 autoStart: true|false 
 ~~~
+
+
+### ListView example:
+
+index.js
+~~~javascript
+var template = {
+    properties: {
+        backgroundColor: 'transparent',
+        height: Ti.UI.SIZE
+    },
+    childTemplates: [{
+        type: 'gif.GifView',
+        bindId: 'gif',
+        properties: {
+            image:"",
+        }
+
+    }]
+};
+
+var s = Ti.UI.createListSection();
+
+var l = Ti.UI.createListView({
+    templates: {
+        'template': template
+    },
+    defaultItemTemplate: 'template',
+    sections: [s]
+});
+
+
+var list = [];
+
+for (var i = 0; i < 10; ++i) {
+
+    list.push({
+        gif: {
+            image: "/images/test.gif",
+            height: 60,
+            width: 60,
+            autoStart:true
+        },
+        properties: {
+            height: 61,
+            id: i
+        }
+    });
+}
+s.setItems(list);
+$.index.add(l);
+$.index.open();
+~~~
+
+alloy.js
+~~~javascript
+var gif = require('com.miga.gifview');  
+~~~
