@@ -34,10 +34,10 @@ public class GifViewProxy extends TiViewProxy {
     TiApplication appContext;
     Activity activity;
     String imageSrc;
-    private static TiBaseFile file;
+    private TiBaseFile file;
     private boolean autoStart = false;
-    public static final String URL_REGEX = "^((https?|ftp)://|(www|ftp)\\.)?[a-z0-9-]+(\\.[a-z0-9-]+)+([/?].*)?$";
-    private static TiBlob imgObj = null;
+    private String URL_REGEX = "^((https?|ftp)://|(www|ftp)\\.)?[a-z0-9-]+(\\.[a-z0-9-]+)+([/?].*)?$";
+    private TiBlob imgObj = null;
 
 	public GifViewProxy() {
 		super();
@@ -219,10 +219,13 @@ public class GifViewProxy extends TiViewProxy {
             
             LayoutInflater inflater     = LayoutInflater.from(getActivity());
             videoWrapper = inflater.inflate(resId_videoHolder, null);
-            gifView   = (GifImageView)videoWrapper.findViewById(resId_video);
-            
-            openImage();
-            setNativeView(videoWrapper);
+            if (resId_video != 0){
+                gifView   = (GifImageView)videoWrapper.findViewById(resId_video);            
+                openImage();
+                setNativeView(videoWrapper);
+            } else {
+                Log.e("GIF", "Layout not found");
+            }
         }
 
         @Override
