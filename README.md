@@ -3,7 +3,9 @@
 
 ![gif.gif](gif.gif)
 
-Adding GIF animations to your android views. For an iOS version have a look at https://github.com/mpociot/TiImageFromGIF
+Adding GIF animations to your android views using https://github.com/felipecsl/GifImageView 
+
+For an iOS version have a look at https://github.com/mpociot/TiImageFromGIF
 
 
 ## Example
