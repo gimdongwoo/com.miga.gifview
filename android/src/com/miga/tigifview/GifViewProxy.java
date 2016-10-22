@@ -1,35 +1,42 @@
 package com.miga.gifview;
 
-import org.appcelerator.kroll.common.Log;
-import org.appcelerator.kroll.annotations.Kroll;
-import org.appcelerator.kroll.KrollDict;
-import org.appcelerator.titanium.view.TiUIView;
-import org.appcelerator.titanium.io.TiBaseFile;
-import org.appcelerator.titanium.io.TiFileFactory;
-import org.appcelerator.titanium.TiApplication;
-import org.appcelerator.titanium.proxy.TiViewProxy;
-import org.appcelerator.kroll.KrollProxy;
 import android.app.Activity;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.view.LayoutInflater;
 import android.view.View;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import org.appcelerator.titanium.TiBlob;
-import com.felipecsl.gifimageview.library.GifImageView;
-import org.appcelerator.titanium.view.TiDrawableReference;
-import android.graphics.BitmapFactory;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
+
 import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.IOException;
+import java.net.URL;
+import android.net.Uri;
 import java.net.URLConnection;
-import android.graphics.Bitmap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.appcelerator.kroll.annotations.Kroll;
+import org.appcelerator.kroll.common.Log;
+import org.appcelerator.kroll.KrollDict;
+import org.appcelerator.kroll.KrollProxy;
+import org.appcelerator.titanium.io.TiBaseFile;
+import org.appcelerator.titanium.io.TiFileFactory;
+import org.appcelerator.titanium.proxy.TiViewProxy;
+import org.appcelerator.titanium.TiApplication;
+import org.appcelerator.titanium.TiBlob;
+import org.appcelerator.titanium.view.TiDrawableReference;
+import org.appcelerator.titanium.view.TiUIView;
+
+import pl.droidsonroids.gif.GifDrawable;
+import pl.droidsonroids.gif.GifImageView;
+
 
 @Kroll.proxy(creatableInModule = TigifviewModule.class)
 public class GifViewProxy extends TiViewProxy {
 
+    GifDrawable gifDrawable;
     GifImageView gifView;
     TiApplication appContext;
     Activity activity;
@@ -50,14 +57,14 @@ public class GifViewProxy extends TiViewProxy {
 	@Kroll.method
     public void stop() {
         if (gifView != null) {
-            gifView.stopAnimation();
+            gifDrawable.stop();
         }
     }
 
     @Kroll.method
     public void start() {
         if (gifView != null) {
-            gifView.startAnimation();
+            gifDrawable.start();
         }
     }
 
@@ -69,7 +76,7 @@ public class GifViewProxy extends TiViewProxy {
     @Kroll.setProperty @Kroll.method
     public void setImage(String url) {
         if (gifView != null) {
-            gifView.stopAnimation();
+            gifDrawable.stop();
         }
         imageSrc = url;
         openImage();          
@@ -161,16 +168,19 @@ public class GifViewProxy extends TiViewProxy {
         Pattern p = Pattern.compile(URL_REGEX);
         Matcher m = p.matcher(imageSrc);//replace with string to compare
 
-        if(m.find()) {                
+        if(m.find()) { 
+            // external file               
             Thread thread = new Thread(new Runnable(){
                 @Override
                 public void run() {
                     try {
                         if (gifView != null) {
-                            gifView.setBytes( getRemoteImage(new URL(imageSrc)) );
-                            
+                            //gifDrawable = new GifDrawable(getRemoteImage(new URL(imageSrc)));
+                            Uri uri = Uri.parse(imageSrc);
+                            gifView.setImageURI(uri);
+                            gifDrawable = (GifDrawable) gifView.getDrawable();
                             if (autoStart){
-                                gifView.startAnimation();
+                                gifDrawable.start();
                             }
                         }
                     } catch (Exception e) {
@@ -181,16 +191,19 @@ public class GifViewProxy extends TiViewProxy {
             });
             thread.start();        
         } else {
+            // local file
             String url = getPathToApplicationAsset(imageSrc);
             TiBaseFile file = TiFileFactory.createTitaniumFile(new String[] { url }, false);            
              
             try {
                 if (file!=null) {
-                    InputStream is = file.getInputStream();
                     if (gifView != null) {
-                        gifView.setBytes(readBytes(is));
+                        
+                        gifDrawable = new GifDrawable( file.getNativeFile() );
+                        gifView.setImageDrawable(gifDrawable);
+                        
                         if (autoStart){
-                            gifView.startAnimation();
+                            gifDrawable.start();
                         }
                     } else {
                         Log.e("GIF","View not found");    
@@ -210,19 +223,23 @@ public class GifViewProxy extends TiViewProxy {
             super(proxy);
             String packageName = proxy.getActivity().getPackageName();
             Resources resources = proxy.getActivity().getResources();
-            View videoWrapper;
-            int resId_videoHolder = -1;
-            int resId_video       = -1;
+            View gifWrapper;
+            int resID_layout = -1;
+            int resID_gif       = -1;
 
-            resId_videoHolder = resources.getIdentifier("layout", "layout", packageName);
-            resId_video       = resources.getIdentifier("gifImageView", "id", packageName);
+            resID_layout = resources.getIdentifier("layout", "layout", packageName);
+            resID_gif    = resources.getIdentifier("gifImageView", "id", packageName);
             
-            LayoutInflater inflater     = LayoutInflater.from(getActivity());
-            videoWrapper = inflater.inflate(resId_videoHolder, null);
-            if (resId_video != 0){
-                gifView   = (GifImageView)videoWrapper.findViewById(resId_video);            
+            Log.i("GIF", resID_layout + " + " + resID_gif);
+            
+            LayoutInflater inflater = LayoutInflater.from(getActivity());
+            gifWrapper = inflater.inflate(resID_layout, null);
+            
+            
+            if (resID_gif != 0){
+                gifView   = (GifImageView)gifWrapper.findViewById(resID_gif);            
                 openImage();
-                setNativeView(videoWrapper);
+                setNativeView(gifWrapper);
             } else {
                 Log.e("GIF", "Layout not found");
             }
