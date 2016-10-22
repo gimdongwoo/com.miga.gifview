@@ -104,3 +104,9 @@ alloy.js
 ~~~javascript
 var gif = require('com.miga.gifview');  
 ~~~
+
+
+### Fix: First frame is not transparent but has a black background
+
+Try to add your gif with `autoStart: false` and use a short delay to start it:
+```_.delay(function(){ gif.start();}, 150);```
