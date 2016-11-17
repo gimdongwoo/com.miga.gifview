@@ -1,0 +1,3 @@
+"/Users/InGrowth/Documents/Projects/Ti-Android-gifview/android/build/generated/java/com/miga/gifview/TigifviewBootstrap.java"
+"/Users/InGrowth/Documents/Projects/Ti-Android-gifview/android/src/com/miga/tigifview/GifViewProxy.java"
+"/Users/InGrowth/Documents/Projects/Ti-Android-gifview/android/src/com/miga/tigifview/TigifviewModule.java"
